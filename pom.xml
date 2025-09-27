@@ -69,7 +69,7 @@
 		<dependency>
 			<groupId>com.example</groupId>
 			<artifactId>auth-contracts</artifactId>
-			<version>1.12</version>
+			<version>1.16</version>
 			<scope>system</scope>
 			<systemPath>${project.basedir}/lib/auth-contracts.jar</systemPath>
 		</dependency>

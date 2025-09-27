@@ -1,16 +1,17 @@
 package com.example.auth_rest.service;
 
 import com.example.auth_rest.storage.InMemoryStorage;
-import com.example.demo.dto.AuthData;
-import com.example.demo.dto.AuthRequest;
-import com.example.demo.dto.AuthResponse;
-import com.example.demo.dto.StatusResponse;
+import com.example.demo.dto.*;
+import com.example.demo.exceptions.EmailAlreadyExistsException;
 import com.example.demo.exceptions.IncorrectPasswordException;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 public class AuthService {
@@ -20,29 +21,13 @@ public class AuthService {
         this.storage = storage;
     }
 
+    public List<AuthData> findAll() {
+        return storage.users.values().stream().toList();
+    }
+
     public AuthData findById(Long id) {
         return Optional.ofNullable(storage.users.get(id))
                 .orElseThrow(() -> new ResourceNotFoundException("Author", id));
-    }
-
-    public boolean checkEmail(String email) {
-        for (Map.Entry<Long, AuthData> entry: storage.users.entrySet()) {
-            if (email.equals(entry.getValue().email())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean checkPasswordByEmail(String email, String password) {
-        for (Map.Entry<Long, AuthData> entry: storage.users.entrySet()) {
-            if (email.equals(entry.getValue().email())) {
-                if (password.equals(entry.getValue().password())) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     public Long getIdByEmail(String email) {
@@ -57,14 +42,21 @@ public class AuthService {
     public void signUp(AuthRequest request) {
         System.out.print("SIGN UP: ");
         System.out.println(request);
+
+        String email = request.email();
+        String password = request.password();
+
+        if (checkEmail(email)) throw new EmailAlreadyExistsException(email);
+
         long id = storage.userSequence.incrementAndGet();
-        AuthData user = new AuthData(id, "", "", request.email(), request.password(), 0, LocalDateTime.now());
+        AuthData user = new AuthData(id, "", "", email, password, 0, LocalDateTime.now());
         storage.users.put(id, user);
     }
 
     public AuthResponse signIn(AuthRequest request) {
         System.out.print("SIGN IN: ");
         System.out.println(request);
+
         String email = request.email();
         String password = request.password();
 
@@ -77,11 +69,12 @@ public class AuthService {
     }
 
     public void deleteAccount(AuthRequest request) {
+        System.out.print("delete account");
         System.out.println(request);
-        System.out.println("delete account");
 
         String email = request.email();
         String password = request.password();
+
         if (!checkEmail(email)) throw new ResourceNotFoundException("Email", email);
         if (!checkPasswordByEmail(email, password)) throw new IncorrectPasswordException("Password");
         Long id = getIdByEmail(request.email());
@@ -95,5 +88,48 @@ public class AuthService {
         } else {
             return new StatusResponse("error", "DOWN");
         }
+    }
+
+    public PagedResponse<AuthData> findAllUsers(int age, int page, int size) {
+        // Получаем стрим всех пользователей
+        Stream<AuthData> usersStream = storage.users.values().stream()
+                .sorted(Comparator.comparing(AuthData::id)); // Сортируем для консистентности
+
+        // Фильтруем, если указан age
+        if (age != 0) {
+            usersStream = usersStream.filter(user -> user.age() == age);
+        }
+
+        List<AuthData> allUsers = usersStream.toList();
+
+        // Выполняем пагинацию
+        int totalElements = allUsers.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int fromIndex = page * size;
+        int toIndex = Math.min(fromIndex + size, totalElements);
+
+        List<AuthData> pageContent = (fromIndex > toIndex) ? List.of() : allUsers.subList(fromIndex, toIndex);
+
+        return new PagedResponse<>(pageContent, page, size, totalElements, totalPages, page >= totalPages - 1);
+    }
+
+    private boolean checkEmail(String email) {
+        for (Map.Entry<Long, AuthData> entry: storage.users.entrySet()) {
+            if (email.equals(entry.getValue().email())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkPasswordByEmail(String email, String password) {
+        for (Map.Entry<Long, AuthData> entry: storage.users.entrySet()) {
+            if (email.equals(entry.getValue().email())) {
+                if (password.equals(entry.getValue().password())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
