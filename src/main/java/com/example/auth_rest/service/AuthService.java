@@ -27,7 +27,7 @@ public class AuthService {
 
     public AuthData findById(Long id) {
         return Optional.ofNullable(storage.users.get(id))
-                .orElseThrow(() -> new ResourceNotFoundException("Author", id));
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
     }
 
     public Long getIdByEmail(String email) {

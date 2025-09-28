@@ -5,7 +5,6 @@ import com.example.demo.dto.*;
 import com.example.demo.endpoints.AuthApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.util.List;
 
 @RestController
