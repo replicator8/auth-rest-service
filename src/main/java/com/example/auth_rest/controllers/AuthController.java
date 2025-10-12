@@ -1,9 +1,11 @@
 package com.example.auth_rest.controllers;
 
+import com.example.auth_rest.assemblers.UserModelAssembler;
 import com.example.auth_rest.service.AuthService;
 import com.example.demo.dto.*;
 import com.example.demo.endpoints.AuthApi;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
@@ -11,6 +13,13 @@ import java.util.List;
 public class AuthController implements AuthApi {
 
     private AuthService authService;
+    private final UserModelAssembler userModelAssembler;
+    private final PagedResourcesAssembler<AuthResponse> pagedResourcesAssembler;
+
+    public AuthController(UserModelAssembler userModelAssembler, PagedResourcesAssembler<AuthResponse> pagedResourcesAssembler) {
+        this.userModelAssembler = userModelAssembler;
+        this.pagedResourcesAssembler = pagedResourcesAssembler;
+    }
 
     @Autowired
     public void setAuthService(AuthService authService) {
@@ -44,6 +53,13 @@ public class AuthController implements AuthApi {
 
     @Override
     public PagedResponse<AuthData> getAllBooks(int age, int page, int size) {
-        return authService.findAllUsers(age, page, size);
+//        PagedResponse<AuthData> pagedResponse = authService.findAllUsers(age, page, size);
+//        Page<AuthData> userPage = new PageImpl<>(
+//                pagedResponse.content(),
+//                PageRequest.of(pagedResponse.pageNumber(), pagedResponse.pageSize()),
+//                pagedResponse.totalElements()
+//        );
+        return null;
+//        return pagedResourcesAssembler.toModel(userPage, userModelAssembler);
     }
 }

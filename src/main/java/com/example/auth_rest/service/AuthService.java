@@ -5,6 +5,7 @@ import com.example.demo.dto.*;
 import com.example.demo.exceptions.EmailAlreadyExistsException;
 import com.example.demo.exceptions.IncorrectPasswordException;
 import com.example.demo.exceptions.ResourceNotFoundException;
+import com.netflix.graphql.dgs.InputArgument;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -25,6 +26,29 @@ public class AuthService {
         return storage.users.values().stream().toList();
     }
 
+    public List<AuthData> findAll(Long id, Integer age, String email, String firstName) {
+        Stream<AuthData> usersStream = storage.users.values().stream()
+                .sorted((b1, b2) -> b2.id().compareTo(b2.id()));
+
+        if (id != null) {
+            usersStream = usersStream.filter(book -> book.id() != null && book.id().equals(id));
+        }
+
+        if (age != null) {
+            usersStream = usersStream.filter(book -> book.age() >= 0 && book.age() == age);
+        }
+
+        if (email != null) {
+            usersStream = usersStream.filter(book -> book.email() != null && book.email().equalsIgnoreCase(email));
+        }
+
+        if (firstName != null) {
+            usersStream = usersStream.filter(book -> book.firstName() != null && book.firstName().equalsIgnoreCase(firstName));
+        }
+
+        return usersStream.toList();
+    }
+
     public AuthData findById(Long id) {
         return Optional.ofNullable(storage.users.get(id))
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
@@ -39,7 +63,7 @@ public class AuthService {
         return 0L;
     }
 
-    public void signUp(AuthRequest request) {
+    public AuthResponse signUp(AuthRequest request) {
         System.out.print("SIGN UP: ");
         System.out.println(request);
 
@@ -51,6 +75,8 @@ public class AuthService {
         long id = storage.userSequence.incrementAndGet();
         AuthData user = new AuthData(id, "", "", email, password, 0, LocalDateTime.now());
         storage.users.put(id, user);
+
+        return new AuthResponse(id, "", 0, "", LocalDateTime.now());
     }
 
     public AuthResponse signIn(AuthRequest request) {
@@ -65,10 +91,10 @@ public class AuthService {
 
         Long id = getIdByEmail(email);
         AuthData data = storage.users.get(id);
-        return new AuthResponse(id, data.firstName(), data.lastName(), data.age(), data.createdAt());
+        return new AuthResponse(id, data.firstName(), data.age(), data.lastName(), data.createdAt());
     }
 
-    public void deleteAccount(AuthRequest request) {
+    public Long deleteAccount(AuthRequest request) {
         System.out.print("delete account");
         System.out.println(request);
 
@@ -80,6 +106,7 @@ public class AuthService {
         Long id = getIdByEmail(request.email());
 
         storage.users.remove(id);
+        return id;
     }
 
     public StatusResponse healthCheck() {
