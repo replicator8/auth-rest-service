@@ -37,26 +37,26 @@ public class InMemoryStorage {
         AuthData user19 = new AuthData(userSequence.incrementAndGet(), "Артём", "Андреев", "test19@mail.ru", "1234567807", 26, LocalDateTime.now());
         AuthData user20 = new AuthData(userSequence.incrementAndGet(), "Светлана", "Михайлова", "test20@mail.ru", "1234567808", 34, LocalDateTime.now());
 
-        users.put(user1.id(), user1);
-        users.put(user2.id(), user2);
-        users.put(user3.id(), user3);
-        users.put(user4.id(), user4);
-        users.put(user5.id(), user5);
-        users.put(user6.id(), user6);
-        users.put(user7.id(), user7);
-        users.put(user8.id(), user8);
-        users.put(user9.id(), user9);
-        users.put(user10.id(), user10);
-        users.put(user11.id(), user11);
-        users.put(user12.id(), user12);
-        users.put(user13.id(), user13);
-        users.put(user14.id(), user14);
-        users.put(user15.id(), user15);
-        users.put(user16.id(), user16);
-        users.put(user17.id(), user17);
-        users.put(user18.id(), user18);
-        users.put(user19.id(), user19);
-        users.put(user20.id(), user20);
+        users.put(user1.getId(), user1);
+        users.put(user2.getId(), user2);
+        users.put(user3.getId(), user3);
+        users.put(user4.getId(), user4);
+        users.put(user5.getId(), user5);
+        users.put(user6.getId(), user6);
+        users.put(user7.getId(), user7);
+        users.put(user8.getId(), user8);
+        users.put(user9.getId(), user9);
+        users.put(user10.getId(), user10);
+        users.put(user11.getId(), user11);
+        users.put(user12.getId(), user12);
+        users.put(user13.getId(), user13);
+        users.put(user14.getId(), user14);
+        users.put(user15.getId(), user15);
+        users.put(user16.getId(), user16);
+        users.put(user17.getId(), user17);
+        users.put(user18.getId(), user18);
+        users.put(user19.getId(), user19);
+        users.put(user20.getId(), user20);
 
         System.out.println("test users generated!");
     }

@@ -22,42 +22,45 @@ public class AuthService {
         this.storage = storage;
     }
 
-    public List<AuthData> findAll() {
-        return storage.users.values().stream().toList();
+    public AuthResponse findById(Long id) {
+        AuthData data = Optional.ofNullable(storage.users.get(id))
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        return toAuthResponse(data);
     }
 
-    public List<AuthData> findAll(Long id, Integer age, String email, String firstName) {
+    public List<AuthResponse> findAll() {
+        return storage.users.values().stream()
+                .map(this::toAuthResponse)
+                .toList();
+    }
+
+    public List<AuthResponse> findAll(Long id, Integer age, String email, String firstName) {
         Stream<AuthData> usersStream = storage.users.values().stream()
-                .sorted((b1, b2) -> b2.id().compareTo(b2.id()));
+                .sorted((b1, b2) -> b2.getId().compareTo(b2.getId()));
 
         if (id != null) {
-            usersStream = usersStream.filter(book -> book.id() != null && book.id().equals(id));
+            usersStream = usersStream.filter(book -> book.getId() != null && book.getId().equals(id));
         }
 
         if (age != null) {
-            usersStream = usersStream.filter(book -> book.age() >= 0 && book.age() == age);
+            usersStream = usersStream.filter(book -> book.getAge() >= 0 && book.getAge() == age);
         }
 
         if (email != null) {
-            usersStream = usersStream.filter(book -> book.email() != null && book.email().equalsIgnoreCase(email));
+            usersStream = usersStream.filter(book -> book.getEmail() != null && book.getEmail().equalsIgnoreCase(email));
         }
 
         if (firstName != null) {
-            usersStream = usersStream.filter(book -> book.firstName() != null && book.firstName().equalsIgnoreCase(firstName));
+            usersStream = usersStream.filter(book -> book.getFirstName() != null && book.getFirstName().equalsIgnoreCase(firstName));
         }
 
-        return usersStream.toList();
-    }
-
-    public AuthData findById(Long id) {
-        return Optional.ofNullable(storage.users.get(id))
-                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        return usersStream.map(this::toAuthResponse).toList();
     }
 
     public Long getIdByEmail(String email) {
         for (Map.Entry<Long, AuthData> entry: storage.users.entrySet()) {
-            if (email.equals(entry.getValue().email())) {
-                return entry.getValue().id();
+            if (email.equals(entry.getValue().getEmail())) {
+                return entry.getValue().getId();
             }
         }
         return 0L;
@@ -91,7 +94,7 @@ public class AuthService {
 
         Long id = getIdByEmail(email);
         AuthData data = storage.users.get(id);
-        return new AuthResponse(id, data.firstName(), data.age(), data.lastName(), data.createdAt());
+        return new AuthResponse(id, data.getFirstName(), data.getAge(), data.getLastName(), data.getCreatedAt());
     }
 
     public Long deleteAccount(AuthRequest request) {
@@ -117,32 +120,32 @@ public class AuthService {
         }
     }
 
-    public PagedResponse<AuthData> findAllUsers(int age, int page, int size) {
-        // Получаем стрим всех пользователей
-        Stream<AuthData> usersStream = storage.users.values().stream()
-                .sorted(Comparator.comparing(AuthData::id)); // Сортируем для консистентности
+    public PagedResponse<AuthResponse> findAllUsers(int age, int page, int size) {
+        Stream<AuthData> stream = storage.users.values().stream()
+                .sorted(Comparator.comparing(AuthData::getId));
 
-        // Фильтруем, если указан age
         if (age != 0) {
-            usersStream = usersStream.filter(user -> user.age() == age);
+            stream = stream.filter(user -> user.getAge() == age);
         }
 
-        List<AuthData> allUsers = usersStream.toList();
+        List<AuthResponse> allResponses = stream
+                .map(this::toAuthResponse)
+                .toList();
 
-        // Выполняем пагинацию
-        int totalElements = allUsers.size();
-        int totalPages = (int) Math.ceil((double) totalElements / size);
-        int fromIndex = page * size;
-        int toIndex = Math.min(fromIndex + size, totalElements);
+        int total = allResponses.size();
+        int from = page * size;
+        int to = Math.min(from + size, total);
+        List<AuthResponse> pageContent = from < total ? allResponses.subList(from, to) : List.of();
 
-        List<AuthData> pageContent = (fromIndex > toIndex) ? List.of() : allUsers.subList(fromIndex, toIndex);
+        int totalPages = (int) Math.ceil((double) total / size);
+        boolean last = page >= totalPages - 1;
 
-        return new PagedResponse<>(pageContent, page, size, totalElements, totalPages, page >= totalPages - 1);
+        return new PagedResponse<>(pageContent, page, size, total, totalPages, last);
     }
 
     private boolean checkEmail(String email) {
         for (Map.Entry<Long, AuthData> entry: storage.users.entrySet()) {
-            if (email.equals(entry.getValue().email())) {
+            if (email.equals(entry.getValue().getEmail())) {
                 return true;
             }
         }
@@ -151,12 +154,22 @@ public class AuthService {
 
     private boolean checkPasswordByEmail(String email, String password) {
         for (Map.Entry<Long, AuthData> entry: storage.users.entrySet()) {
-            if (email.equals(entry.getValue().email())) {
-                if (password.equals(entry.getValue().password())) {
+            if (email.equals(entry.getValue().getEmail())) {
+                if (password.equals(entry.getValue().getPassword())) {
                     return true;
                 }
             }
         }
         return false;
+    }
+
+    private AuthResponse toAuthResponse(AuthData data) {
+        return new AuthResponse(
+                data.getId(),
+                data.getFirstName(),
+                data.getAge(),
+                data.getLastName(),
+                data.getCreatedAt()
+        );
     }
 }

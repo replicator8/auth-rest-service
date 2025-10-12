@@ -22,7 +22,7 @@ public class AuthDataFetcher {
     }
 
     @DgsQuery
-    public List<AuthData> getAllUsers(@InputArgument Long id, @InputArgument Integer age, @InputArgument String email, @InputArgument String firstName) {
+    public List<AuthResponse> getAllUsers(@InputArgument Long id, @InputArgument Integer age, @InputArgument String email, @InputArgument String firstName) {
         return authService.findAll(id, age, email, firstName);
     }
 

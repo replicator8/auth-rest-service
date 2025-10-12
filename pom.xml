@@ -107,7 +107,7 @@
 		<dependency>
 			<groupId>com.example</groupId>
 			<artifactId>auth-contracts</artifactId>
-			<version>1.21</version>
+			<version>1.24</version>
 			<scope>system</scope>
 			<systemPath>${project.basedir}/lib/auth-contracts.jar</systemPath>
 		</dependency>
