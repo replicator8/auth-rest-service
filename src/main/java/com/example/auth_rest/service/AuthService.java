@@ -1,11 +1,15 @@
 package com.example.auth_rest.service;
 
+import com.example.auth_rest.config.RabbitMQConfig;
 import com.example.auth_rest.storage.InMemoryStorage;
 import com.example.demo.dto.*;
 import com.example.demo.exceptions.EmailAlreadyExistsException;
 import com.example.demo.exceptions.IncorrectPasswordException;
 import com.example.demo.exceptions.ResourceNotFoundException;
 import com.netflix.graphql.dgs.InputArgument;
+import events.UserCreateEvent;
+import events.UserDeleteEvent;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -16,10 +20,12 @@ import java.util.stream.Stream;
 
 @Service
 public class AuthService {
+    private final RabbitTemplate rabbitTemplate;
     private final InMemoryStorage storage;
 
-    public AuthService(InMemoryStorage storage) {
+    public AuthService(InMemoryStorage storage, RabbitTemplate rabbitTemplate) {
         this.storage = storage;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     public AuthResponse findById(Long id) {
@@ -79,6 +85,9 @@ public class AuthService {
         AuthData user = new AuthData(id, "", "", email, password, 0, LocalDateTime.now());
         storage.users.put(id, user);
 
+        UserCreateEvent event = new UserCreateEvent(id, email);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY_USER_CREATED, event);
+
         return new AuthResponse(id, "", 0, "", LocalDateTime.now());
     }
 
@@ -107,6 +116,9 @@ public class AuthService {
         if (!checkEmail(email)) throw new ResourceNotFoundException("Email", email);
         if (!checkPasswordByEmail(email, password)) throw new IncorrectPasswordException("Password");
         Long id = getIdByEmail(request.email());
+
+        UserDeleteEvent event = new UserDeleteEvent(id, email);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY_USER_DELETED, event);
 
         storage.users.remove(id);
         return id;
