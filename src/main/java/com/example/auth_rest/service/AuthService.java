@@ -6,7 +6,6 @@ import com.example.demo.dto.*;
 import com.example.demo.exceptions.EmailAlreadyExistsException;
 import com.example.demo.exceptions.IncorrectPasswordException;
 import com.example.demo.exceptions.ResourceNotFoundException;
-import com.netflix.graphql.dgs.InputArgument;
 import events.UserCreateEvent;
 import events.UserDeleteEvent;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
